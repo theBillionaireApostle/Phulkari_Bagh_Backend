@@ -13,9 +13,9 @@ const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 
 app.use(cors({
-    origin: 'http://localhost:3000', // allow only your front-end origin
-    credentials: true               // allow cookies to be sent
-  }));
+    origin: ['http://localhost:3000', 'https://www.phulkaribagh.com'],
+    credentials: true
+}));
   
 
 // Middleware to parse JSON request bodies and cookies
