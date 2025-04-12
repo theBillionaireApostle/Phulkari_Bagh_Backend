@@ -49,13 +49,18 @@ router.post('/login', async (req, res) => {
     });
 
     // Set the token in an HTTP-only cookie
-    res.cookie("admin_jwt", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 1000, // maxAge is in milliseconds (1 day)
-      sameSite: "strict",
-    });
+      // Example code in your /admin/login route (server-side)
+res.cookie("admin_jwt", token, {
+    httpOnly: true,
+    // For local development over HTTP, set secure to false.
+    secure: process.env.NODE_ENV === "production",
+    // Use 'lax' or 'none' (with secure) if cross-site cookies are necessary.
+    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    // Optionally set the domain if needed.
+    // domain: ".phulkaribagh.com",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 1000, // 1 day in milliseconds
+  });
 
     return res.json({ success: true });
   } catch (error) {
