@@ -59,34 +59,29 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: "Invalid data: userId and items array are required." });
     }
 
-    // If the items array is empty, remove the cart document completely.
-    if (items.length === 0) {
-      await Cart.deleteOne({ userId });
-      return res.json({ userId, items: [] });
+    // If items are present, validate their structure.
+    if (items.length > 0) {
+      const isValidItems = items.every(
+        (item) =>
+          item.productId &&
+          typeof item.productId === "string" &&
+          item.name &&
+          typeof item.name === "string" &&
+          typeof item.price === "number" &&
+          typeof item.quantity === "number" &&
+          Number.isInteger(item.quantity)
+      );
+      if (!isValidItems) {
+        return res.status(400).json({ error: "Invalid items structure." });
+      }
     }
 
-    // Validate each item in the items array.
-    const isValidItems = items.every(
-      (item) =>
-        item.productId &&
-        typeof item.productId === "string" &&
-        item.name &&
-        typeof item.name === "string" &&
-        typeof item.price === "number" &&
-        typeof item.quantity === "number" &&
-        Number.isInteger(item.quantity)
-    );
-
-    if (!isValidItems) {
-      return res.status(400).json({ error: "Invalid items structure." });
-    }
-
+    // Always upsert the cart document regardless of items array length.
     const updatedCart = await Cart.findOneAndUpdate(
       { userId },
       { items, updatedAt: new Date() },
       { new: true, upsert: true, runValidators: true }
     );
-
     return res.json(updatedCart);
   } catch (error) {
     console.error("Error updating cart:", error);
