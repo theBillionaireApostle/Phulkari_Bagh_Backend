@@ -1,29 +1,48 @@
 // routes/cartRoutes.js
 const express = require('express');
 const router = express.Router();
-const dbConnect = require('../config/db'); // Adjust the path as needed.
+const dbConnect = require('../config/db');
 const Cart = require('../models/Cart');
+const Product = require('../models/Product'); // Import Product model
 
-// GET: Fetch the cart for a given user based on a query parameter.
+// GET: Fetch the cart for a given user, including product images
 router.get('/', async (req, res) => {
   try {
-    // Establish a connection to the database.
     await dbConnect();
 
-    // Get userId from query parameters.
     const { userId } = req.query;
-
-    // Validate that userId is provided.
     if (!userId) {
       return res.status(400).json({ error: "Missing userId" });
     }
 
-    // Find the cart document corresponding to the userId.
-    // Using .lean() returns a plain JavaScript object.
+    // Find the cart. Using .lean() for a plain JS object.
     const cart = await Cart.findOne({ userId }).lean();
 
-    // Return the cart if found; otherwise, return a default structure with empty items.
-    return res.json(cart || { userId, items: [] });
+    // If no cart found, return empty
+    if (!cart) {
+      return res.json({ userId, items: [] });
+    }
+
+    // For each item in cart, look up the product to retrieve an image or more details
+    const updatedItems = [];
+    for (const item of cart.items) {
+      // Find the product by its ID
+      const product = await Product.findById(item.productId).lean();
+
+      // If found, attach its image (assuming your Product has defaultImage.url)
+      if (product && product.defaultImage && product.defaultImage.url) {
+        item.image = product.defaultImage.url;
+      }
+      // If your product schema or naming is different, adjust accordingly.
+      // e.g., item.image = product.images[0]?.url || "No Image"
+
+      updatedItems.push(item);
+    }
+
+    // Overwrite the original items with updated ones
+    cart.items = updatedItems;
+
+    return res.json(cart);
   } catch (error) {
     console.error("Error fetching cart:", error);
     return res.status(500).json({ error: error.message || "Failed to fetch cart" });
@@ -33,18 +52,13 @@ router.get('/', async (req, res) => {
 // POST: Save or update the cart for a user.
 router.post('/', async (req, res) => {
   try {
-    // Establish a connection to the database.
     await dbConnect();
 
-    // Retrieve data from the request body.
     const { userId, items } = req.body;
-
-    // Validate required fields.
     if (!userId || !Array.isArray(items)) {
       return res.status(400).json({ error: "Invalid data: userId and items array are required." });
     }
 
-    // Additional validation: Ensure each item has the expected fields.
     const isValidItems = items.every(
       (item) =>
         item.productId &&
@@ -60,8 +74,6 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: "Invalid items structure." });
     }
 
-    // Update or create the cart document.
-    // The runValidators option enforces your schema validations.
     const updatedCart = await Cart.findOneAndUpdate(
       { userId },
       { items, updatedAt: new Date() },
