@@ -1,3 +1,4 @@
+// routes/adminRoutes.js (or wherever you define /admin/login)
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -44,25 +45,12 @@ router.post('/login', async (req, res) => {
 
     // Create a JWT that includes the admin's UID and role.
     const token = jwt.sign({ uid: user.uid, role: "admin" }, SECRET_KEY, {
-      expiresIn: "1d",
+      expiresIn: "1d", // token expires in 1 day
       algorithm: "HS256",
     });
 
-    // Set the token in an HTTP-only cookie
-      // Example code in your /admin/login route (server-side)
-res.cookie("admin_jwt", token, {
-    httpOnly: true,
-    // For local development over HTTP, set secure to false.
-    secure: process.env.NODE_ENV === "production",
-    // Use 'lax' or 'none' (with secure) if cross-site cookies are necessary.
-    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-    // Optionally set the domain if needed.
-    // domain: ".phulkaribagh.com",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 1000, // 1 day in milliseconds
-  });
-
-    return res.json({ success: true });
+    // Instead of setting the cookie, return the token in JSON:
+    return res.json({ token });
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({ error: "Server error" });
