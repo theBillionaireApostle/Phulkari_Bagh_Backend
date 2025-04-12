@@ -96,4 +96,30 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+// PATCH: Toggle product "published" status by ID, i.e. flip true <-> false
+router.patch('/:id/toggle', async (req, res) => {
+  try {
+    await dbConnect();
+    const { id } = req.params;
+
+    // 1) Find the product first
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // 2) Flip the 'published' field
+    const newPublishedStatus = !product.published;
+    product.published = newPublishedStatus;
+
+    // 3) Save the product
+    await product.save();
+
+    return res.json(product);
+  } catch (error) {
+    console.error("Error toggling product published status:", error);
+    return res.status(500).json({ error: error.message || "Failed to toggle product" });
+  }
+});
+
 module.exports = router;
