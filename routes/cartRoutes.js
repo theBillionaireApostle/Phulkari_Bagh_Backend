@@ -59,6 +59,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: "Invalid data: userId and items array are required." });
     }
 
+    // If the items array is empty, remove the cart document completely.
+    if (items.length === 0) {
+      await Cart.deleteOne({ userId });
+      return res.json({ userId, items: [] });
+    }
+
+    // Validate each item in the items array.
     const isValidItems = items.every(
       (item) =>
         item.productId &&
