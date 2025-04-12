@@ -2,6 +2,9 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors'); // <-- Import cors
+const app = express();
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Import your route modules
 const productRoutes = require('./routes/productRoutes');
@@ -10,7 +13,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
-const app = express();
+
 
 app.use(cors({
     origin: ['http://localhost:3000', 'https://www.phulkaribagh.com'],
@@ -19,8 +22,7 @@ app.use(cors({
   
 
 // Middleware to parse JSON request bodies and cookies
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 app.use(cookieParser());
 
 // Mount the routes
